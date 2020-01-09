@@ -12,7 +12,7 @@ import (
 // Store is the interface for reading from / writing to a storage destination
 type Store interface {
 	Write(content io.Reader) error
-	Read() (string, error)
+	Read() (io.Reader, error)
 }
 
 // NewStore creates new s3 destination client

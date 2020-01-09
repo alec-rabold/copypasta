@@ -1,6 +1,7 @@
 package store
 
 import (
+	"bytes"
 	"github.com/alec-rabold/copypasta/runcommands"
 	minio "github.com/minio/minio-go"
 	"io"
@@ -65,11 +66,11 @@ func (s *S3Store) Write(content io.Reader) error {
 }
 
 // Read is the function responsible to reading from s3
-func (s *S3Store) Read() (string, error) {
-	tempFile, err := ioutil.TempFile("/tmp", "tempS3ObjectFile")
+func (s *S3Store) Read() (io.Reader, error) {
+	tempFile, err := ioutil.TempFile(os.TempDir(), "tempS3ObjectFile")
 	if err != nil {
 		log.Errorf("Error reading from bucket: %s", err.Error())
-		return "", err
+		return nil, err
 	}
 	defer func() {
 		tempFile.Close()
@@ -80,14 +81,14 @@ func (s *S3Store) Read() (string, error) {
 	err = s.minioClient.FGetObject(s.target.BucketName, defaultObjectName, tempFile.Name(), minio.GetObjectOptions{})
 	if err != nil {
 		log.Errorf("Error retrieving s3 object %s", err.Error())
-		return "", err
+		return nil, err
 	}
 
 	byteContent, err := ioutil.ReadFile(tempFile.Name())
 	if err != nil {
 		log.Errorf("Error reading content from file %s", err.Error())
-		return "", err
+		return nil, err
 	}
 
-	return string(byteContent), nil
+	return bytes.NewReader(byteContent), nil
 }

@@ -12,7 +12,6 @@ import (
 // S3Target is the struct for the copypasta target destination
 type S3Target struct {
 	Name            string `yaml:"name"`
-	Backend         string `yaml:"backend"`
 	AccessKey       string `yaml:"accesskey"`
 	SecretAccessKey string `yaml:"secretaccesskey"`
 	BucketName      string `yaml:"bucketname"`
@@ -21,13 +20,12 @@ type S3Target struct {
 }
 
 // Update the configuration file
-func Update(name, backend, accessKey, secretAccessKey, bucketName, endpoint, location string) error {
+func Update(name, accessKey, secretAccessKey, bucketName, endpoint, location string) error {
 	var target *S3Target
 	var err error
 
 	freshTarget := &S3Target{
 		Name:            name,
-		Backend:         backend,
 		AccessKey:       accessKey,
 		SecretAccessKey: secretAccessKey,
 		BucketName:      bucketName,
@@ -55,7 +53,7 @@ func Update(name, backend, accessKey, secretAccessKey, bucketName, endpoint, loc
 func Load() (*S3Target, error) {
 	var target *S3Target
 
-	byteContent, err := ioutil.ReadFile(filepath.Join(os.Getenv("HOME"), ".copy-pastarc"))
+	byteContent, err := ioutil.ReadFile(filepath.Join(os.Getenv("HOME"), ".copypastarc"))
 	if err != nil {
 		log.Errorf("Unable to load the S3 target, make sure ~/.copypastarc exists %s", err.Error())
 		return nil, err

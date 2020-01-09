@@ -34,4 +34,5 @@ func (t *TargetCommand) Run(args []string) int {
 		t.UI.Output("	" + target.Name)
 		return 0
 	}
+	return 0
 }

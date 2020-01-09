@@ -9,15 +9,25 @@ import (
 )
 
 func main() {
+	ui := &cli.BasicUi{
+		Writer:      os.Stdout,
+		Reader:      os.Stdin,
+		ErrorWriter: os.Stdout,
+	}
+
+	uiColored := &cli.ColoredUi{
+		OutputColor: cli.UiColorNone,
+		InfoColor:   cli.UiColorNone,
+		ErrorColor:  cli.UiColorRed,
+		Ui:          ui,
+	}
+
 	c := cli.NewCLI("copypasta", "1.0.0")
 	c.Args = os.Args[1:]
 	c.Commands = map[string]cli.CommandFactory{
 		"": func() (cli.Command, error) {
-			return &commands.CopyPasteCommand{Ui: uiColored}, nil
+			return &commands.CopyPasteCommand{UI: uiColored}, nil
 		},
-
-		"foo": fooCommandFactory,
-		"bar": barCommandFactory,
 	}
 
 	exitStatus, err := c.Run()
