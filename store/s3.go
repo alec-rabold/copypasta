@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -41,7 +42,7 @@ func NewS3Store(client MinioClient, target *runcommands.S3Target) *S3Store {
 
 // TODO: Encryption option/flag
 // Write is the function responsible for writing to s3
-func (s *S3Store) Write(content io.Reader) error {
+func (s *S3Store) Write(content string) error {
 	bucketExists, err := s.minioClient.BucketExists(s.target.BucketName)
 	if err != nil {
 		log.Errorf("Error checking for bucket: %s", err.Error())
@@ -56,7 +57,8 @@ func (s *S3Store) Write(content io.Reader) error {
 		}
 	}
 
-	_, err = s.minioClient.PutObject(s.target.BucketName, defaultObjectName, content, defaultStreamSizeUnknown, minio.PutObjectOptions{ContentType: defaultContentType})
+	sf := strings.NewReader(content)
+	_, err = s.minioClient.PutObject(s.target.BucketName, defaultObjectName, sf, defaultStreamSizeUnknown, minio.PutObjectOptions{ContentType: defaultContentType})
 	if err != nil {
 		log.Errorf("Error writing to bucket: %s", err.Error())
 		return err

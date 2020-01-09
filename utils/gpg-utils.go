@@ -3,9 +3,9 @@ package utils
 import (
 	"bytes"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -14,17 +14,27 @@ const pubKey = "/.ssh/id_rsa.pub"
 const fileToEnc = "~/side-projects/data.txt"
 
 // EncryptFile creates a (temporary) encrypted file for the recipient
-func EncryptFile(file *os.File, recipient string) (io.Reader, error) {
+func EncryptFile(file *os.File, recipient string) (string, error) {
 	return encryptWithGPGBinary(file, recipient)
 }
 
 // DecryptFile creates a (temporary) encrypted file for the recipient
-func DecryptFile(file io.Reader) (io.Reader, error) {
-	println("GGG")
-	return decryptWithGPGBinary(file)
+func DecryptFile(file io.Reader) (string, error) {
+	reader, err := decryptWithGPGBinary(file)
+	if err != nil {
+		log.Errorf("Error decrypting: %s", err.Error())
+		return "", err
+	}
+	cipherBytes, err := ioutil.ReadAll(reader)
+	if err != nil {
+		log.Errorf("Error reading bytes: %s", err.Error())
+		return "", err
+	}
+	cipher := string(cipherBytes)
+	return cipher, nil
 }
 
-func encryptWithGPGBinary(file *os.File, recipient string) (io.Reader, error) {
+func encryptWithGPGBinary(file *os.File, recipient string) (string, error) {
 	args := []string{
 		"--yes",
 		"--encrypt",
@@ -41,9 +51,9 @@ func encryptWithGPGBinary(file *os.File, recipient string) (io.Reader, error) {
 	err := cmd.Run()
 	if err != nil {
 		log.Errorf("Error encrypting message with gpg binary: %s", err.Error())
-		return nil, err
+		return "", err
 	}
-	return bytes.NewReader(stdout.Bytes()), nil
+	return string(stdout.Bytes()), nil
 }
 
 func decryptWithGPGBinary(file io.Reader) (io.Reader, error) {
@@ -53,11 +63,7 @@ func decryptWithGPGBinary(file io.Reader) (io.Reader, error) {
 	}
 	cmd := exec.Command("gpg", args...)
 	var stdout, stderr bytes.Buffer
-	// cmd.Stdin = file
-	println("got here oook")
-
-	cmd.Stdin = strings.NewReader("file")
-	println("got here ok")
+	cmd.Stdin = file
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err := cmd.Run()

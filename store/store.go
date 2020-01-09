@@ -11,7 +11,7 @@ import (
 
 // Store is the interface for reading from / writing to a storage destination
 type Store interface {
-	Write(content io.Reader) error
+	Write(content string) error
 	Read() (io.Reader, error)
 }
 

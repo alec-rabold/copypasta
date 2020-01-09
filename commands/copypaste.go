@@ -3,7 +3,6 @@ package commands
 import (
 	"flag"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/alec-rabold/copypasta/runcommands"
@@ -43,12 +42,10 @@ func (c *CopyPasteCommand) Run(args []string) int {
 		return 1
 	}
 	if *optionPaste {
-		content, err := doPaste(target, store)
-		if err != nil {
+		if err := doPaste(target, store); err != nil {
 			log.Errorf("Error retrieving content: %s", err.Error())
 			return 1
 		}
-		fmt.Print(content)
 	} else {
 		if recipient == "" {
 			println(c.Help())
@@ -70,7 +67,6 @@ func doCopy(target *runcommands.S3Target, s store.Store, recipient string) error
 		log.Errorf("Error encrypting data: %s", err.Error())
 		return err
 	}
-	// if err := s.Write(os.Stdin); err != nil {
 	if err = s.Write(cipher); err != nil {
 		log.Errorf("Error writing to the bucket: %s", err.Error())
 		return err
@@ -78,20 +74,22 @@ func doCopy(target *runcommands.S3Target, s store.Store, recipient string) error
 	return nil
 }
 
-func doPaste(target *runcommands.S3Target, s store.Store) (io.Reader, error) {
+func doPaste(target *runcommands.S3Target, s store.Store) error {
 	cipher, err := s.Read()
+	// cipherBytes, err := ioutil.ReadAll(reader)
+	// cipher := string(cipherBytes)
 	if err != nil {
 		log.Errorf("Error reading from the bucket.. Have you copied yet? %s", err.Error())
-		return nil, err
+		return err
 	}
-	println(cipher)
 	content, err := utils.DecryptFile(cipher)
 	if err != nil {
 		log.Errorf("Error decrypting message: %s", err.Error())
-		return nil, err
+		return err
 	}
+	fmt.Print(content)
 
-	return content, nil
+	return nil
 
 }
 
